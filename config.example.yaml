@@ -1,0 +1,74 @@
+# config.example.yaml
+# Example configuration for Storyze Assessment Tracker ETL processes.
+# Copy this file to config.yaml and update the values for your environment.
+
+# --- Global Settings (Applied across all sources unless overridden) ---
+global_settings:
+  # Domain used for normalizing server names (remove suffix, etc.)
+  domain_name:            'yourdomain.com' 
+  domain_suffix:          '.yourdomain.com' # Include leading dot if applicable
+  
+  # Row batch sizes for database operations
+  batch_size_bulk_load:   5000         # For loading data into raw/temp tables
+  batch_size_map_insert:  1000         # For reporting progress during map table inserts
+
+  # SQL Command Timeouts (in seconds)
+  sql_connect_timeout:    30           # Max time to wait for initial DB connection
+  sql_command_timeout:    300          # Default timeout for most SQL commands
+  sql_cmd_timeout_truncate: 300        # Specific timeout for TRUNCATE TABLE
+  sql_cmd_timeout_bulk_copy: 600       # Timeout for large data loads (SqlBulkCopy)
+  sql_cmd_timeout_map_read: 120        # Timeout for reading existing names from map table
+  sql_cmd_timeout_map_write: 120       # Timeout for inserting new names into map table
+  sql_cmd_timeout_sample_update: 60    # Timeout for bulk update using sample data
+  sql_cmd_timeout_sample_sync: 180     # Timeout for synchronizing 'fixed' flag after sample update
+
+# --- Source-Specific Settings --- 
+# Define configuration for each data source type (e.g., mssql, ad, scom)
+sources:
+  mssql: # Settings specific to MSSQL assessment findings
+    
+    # Database object names used by the ETL process
+    raw_schema:             'raw'         # Schema for raw data imported from CSV
+    raw_table:              'mssql_findings' # Table name for raw data
+    stg_schema:             'stg'         # Schema for staging data (after processing)
+    stg_table:              'mssql_findings' # Table name for staging data
+    map_schema:             'prod'        # Schema for the object map table
+    map_table:              'mssql_objects_map' # Table mapping raw object names to canonical names
+    map_target_column:      'object_name' # Column in map_table containing the canonical name
+    
+    # --- File Paths --- 
+    # Use full, absolute paths or paths relative to the project root.
+    # EXAMPLE: Update these paths to point to your actual file locations.
+    excel_source_file:      'X:\path\to\your\data\mssql\mssql_findings_source.xlsx' # Path to the raw Excel assessment file
+    csv_clean_file:         'X:\path\to\your\data\mssql\mssql_findings_clean.csv'   # Path where the cleaned CSV will be written/read
+    data_sample_file:       'X:\path\to\your\data\mssql\mssql_demo_sample_data.csv' # Path to the sample tracking data CSV for demo/updates
+    object_whitelist_file:  'X:\path\to\your\data\mssql\mssql_map_whitelist.csv'    # Path to the CSV containing approved server/object names
+
+    # --- Excel Processing (Script 006) --- 
+    excel_sheet:            0             # Worksheet name (string) or 0-based index (integer)
+    excel_header_row:       1             # Row index (0-based) where headers are located
+    excel_columns:          'A:L'         # Range of columns to read from the Excel sheet
+    header_check_cols:                    # List of column headers that MUST be present in the Excel file
+      - 'Category'
+      - 'Severity'
+      - 'Issue Name'
+    key_columns:                          # Column(s) that identify the start of a new finding record (used to merge multi-line rows)
+      - 'Category'
+      - 'Issue Name'
+    concat_cols: []                       # Column(s) whose values should be appended together for multi-line entries (NOT IMPLEMENTED CURRENTLY)
+    concat_separator:       "\n"          # Separator used when concatenating multi-line columns (default: newline)
+
+    # --- Map Population --- 
+    source_object_column:   'Affected Targets' # Column in the cleaned CSV containing semi-colon separated raw object names
+    extractor_ignore_keywords:              # List of keywords to ignore during server name extraction (lowercase)
+      - 'none'
+      - 'file'
+      - 'errorlog'
+      - 'transactionlogfile'
+      - '(local)'
+      - 'localhost'
+    
+    # --- Sample Data Loading --- 
+    sample_data_key_column: 'finding_object_id' # Column name used to join sample data to the staging table
+    default_date_placeholder: '1900-01-01'      # Dates matching this value will be treated as NULL (Handled by Get-DbSafeDate in Utils)
+    unknown_object_name:    'Unknown'      # Name assigned to objects not found in the whitelist

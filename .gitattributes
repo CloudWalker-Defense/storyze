@@ -1,0 +1,44 @@
+# Auto-detect text, checkout per OS, store LF.
+* text=auto
+
+# Force LF line endings.
+*.ps1 text eol=lf
+*.psm1 text eol=lf
+*.psd1 text eol=lf
+*.sql text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.csv text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.ts text eol=lf
+*.py text eol=lf
+*.java text eol=lf
+*.sh text eol=lf
+*.bash text eol=lf
+*.rb text eol=lf
+*.php text eol=lf
+*.cs text eol=lf
+*.c text eol=lf
+*.cpp text eol=lf
+*.h text eol=lf
+
+# Ensure Git config files use LF.
+.gitattributes text eol=lf
+.gitignore text eol=lf
+
+# Treat bundled modules as binary to prevent Git from changing line endings.
+Modules/** binary
+
+# Image files - Treat as binary to prevent Git modifying them.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.bmp binary
+*.ico binary
+*.svg binary 
