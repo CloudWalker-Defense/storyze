@@ -1,0 +1,67 @@
+# config.example.yaml
+# Example configuration for Storyze Assessment Tracker ETL processes.
+# Copy this file to config.yaml and update the values for your environment.
+
+# --- Global Settings ---
+global_settings:
+  # Domain configuration for server name normalization
+  domain_suffix:          '.yourdomain.com' # Include the leading dot - required for name normalization
+  
+  # Database operation batch sizes
+  batch_size_bulk_load:   5000         # For SqlBulkCopy operations
+  batch_size_map_insert:  1000         # For object map table updates
+  
+  # SQL Timeouts (in seconds)
+  sql_connect_timeout:    30           # Database connection establishment
+  sql_command_timeout:    300          # Standard SQL commands
+  sql_cmd_timeout_bulk_copy: 600       # SqlBulkCopy operations
+  sql_cmd_timeout_map_read: 120        # Map table reading
+  sql_cmd_timeout_map_write: 120       # Map table writing
+  sql_cmd_timeout_sample_sync: 180     # Fixed flag synchronization
+
+# --- Source-Specific Settings --- 
+# Define configuration for each data source type (e.g., MSSQL, AD, SCOM, etc.)
+sources:
+  mssql: # Settings for MSSQL Findings
+    # Database objects
+    raw_schema:             'raw'         # Schema for raw data
+    raw_table:              'mssql_findings' # Table for raw data
+    stg_schema:             'stg'         # Schema for staging data
+    stg_table:              'mssql_findings' # Table for staging data
+    map_schema:             'prod'        # Schema for the object map
+    map_table:              'mssql_objects_map' # Table for server name mapping
+    map_target_column:      'object_name' # Column containing canonical names
+    
+    # Data Files & Paths - UPDATE THESE TO YOUR ENVIRONMENT
+    excel_source_file:      'X:\path\to\your\data\mssql\mssql_findings_source.xlsx' # Input Excel file
+    csv_clean_file:         'X:\path\to\your\data\mssql\mssql_findings_clean.csv'   # Cleaned CSV output
+    data_sample_file:       'X:\path\to\your\data\mssql\mssql_demo_sample_data.csv' # Sample data for demo
+    object_whitelist_file:  'X:\path\to\your\data\mssql\mssql_map_whitelist.csv'    # Approved server names
+
+    # Excel Processing
+    excel_sheet:            0             # Sheet index (0-based) or name
+    excel_header_row:       1             # Header row index (0-based)
+    excel_columns:          'A:L'         # Column range to process
+    header_check_cols:                    # Required columns for validation
+      - 'Category'
+      - 'Severity'
+      - 'Issue Name'
+    key_columns:                          # Unique identifier columns (for multi-line consolidation)
+      - 'Category'
+      - 'Issue Name'
+    concat_cols: []                       # Multi-line concatenation columns
+    concat_separator:       "\n"          # Separator for concatenation
+
+    # Name Extraction
+    source_object_column:   'Affected Targets' # Column containing server names
+    extractor_ignore_keywords:            # Keywords to ignore during extraction
+      - 'none'
+      - 'file'
+      - 'errorlog'
+      - 'transactionlogfile'
+      - '(local)'
+      - 'localhost'
+    
+    # Sample Data Loading
+    sample_data_key_column: 'finding_object_id' # Join column for sample data
+    default_date_placeholder: '1900-01-01'      # Date placeholder to treat as NULL

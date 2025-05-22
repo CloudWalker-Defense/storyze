@@ -1,0 +1,10 @@
+.env
+venv/
++.venv/
++*/.venv/
++*/venv/
+config.yaml
+storyze_test_combinations.bat
+storyze_test_combinations.ps1
+test-azure.ps1
+Contributing_AI.md
